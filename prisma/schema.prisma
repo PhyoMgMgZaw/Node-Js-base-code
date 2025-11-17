@@ -1,0 +1,144 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      =   env("DATABASE_URL")
+}
+model Project {
+  projectId   String    @id @default(uuid())
+  name        String
+  description String?
+  platforms   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  releases    Release[]
+}
+
+model Release {
+  releaseId       String           @id @default(uuid())
+  projectId       String
+  versionNumber   String
+  releaseType     String
+  environment     String
+  status          String
+  releaseDate     DateTime?
+  releaseNotesUrl String?
+  reviewedBy      String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  project          Project        @relation(fields: [projectId], references: [projectId])
+  changelogItems   ChangelogItem[]
+  releaseFiles     ReleaseFile[]
+  environmentReqs  EnvironmentRequirement[]
+  releaseDevelopers ReleaseDeveloper[]
+  ecosystemLinks   EcosystemReleaseLink[]
+}
+
+model ChangelogItem {
+  changeId   String   @id @default(uuid())
+  releaseId  String
+  category   String
+  description String
+  createdAt  DateTime @default(now())
+
+  release    Release @relation(fields: [releaseId], references: [releaseId])
+}
+
+model ReleaseFile {
+  fileId     String   @id @default(uuid())
+  releaseId  String
+  fileName   String
+  filePath   String
+  fileType   String
+  description String?
+  createdAt  DateTime @default(now())
+
+  release    Release @relation(fields: [releaseId], references: [releaseId])
+}
+
+model EnvironmentRequirement {
+  envId           String   @id @default(uuid())
+  releaseId       String
+  name            String
+  versionRequired String
+  notes           String?
+
+  release         Release @relation(fields: [releaseId], references: [releaseId])
+}
+
+model Developer {
+  devId    String   @id  
+  name     String
+  email    String   @unique
+  role     String @default("user")
+  team     String
+  password  String
+  joinedAt DateTime @default(now())
+  releaseDevelopers ReleaseDeveloper[]
+}
+
+model ReleaseDeveloper {
+  releaseId     String
+  devId         String
+  contributions String?
+
+  release       Release   @relation(fields: [releaseId], references: [releaseId])
+  developer     Developer @relation(fields: [devId], references: [devId])
+
+  @@id([releaseId, devId])
+}
+
+model EcosystemRelease {
+  ecosystemId String   @id @default(uuid())
+  name        String
+  tag         String?
+  description String?
+  releaseDate DateTime?
+  createdAt   DateTime @default(now())
+
+  links       EcosystemReleaseLink[]
+}
+
+model EcosystemReleaseLink {
+  ecosystemId String
+  releaseId   String
+
+  ecosystem   EcosystemRelease @relation(fields: [ecosystemId], references: [ecosystemId])
+  release     Release          @relation(fields: [releaseId], references: [releaseId])
+
+  @@id([ecosystemId, releaseId])
+}
+
+model KnowledgeDoc {
+  docId      String   @id @default(uuid())
+  title      String
+  content    String
+  category   String?
+  visibility String?
+  docUrl     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  relatedDocs RelatedDoc[]
+}
+
+ model RelatedDoc {
+  docId       String
+  relatedType String
+  relatedId   String
+
+  doc         KnowledgeDoc @relation(fields: [docId], references: [docId])
+
+  @@id([docId, relatedType, relatedId])
+}
