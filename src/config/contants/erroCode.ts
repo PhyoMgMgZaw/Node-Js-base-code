@@ -3,6 +3,7 @@ export enum ErrorCode {
   UNAUTHORIZED = "UNAUTHORIZED",                 // No token / invalid token
   FORBIDDEN = "FORBIDDEN",                       // Not allowed
   SESSION_EXPIRED = "SESSION_EXPIRED",
+  TOKEN_EXPIRED = "TOKEN_EXPIRED",
 
  
   BAD_REQUEST = "BAD_REQUEST",
