@@ -1,11 +1,7 @@
 // src/services/baseService.ts
-import { Prisma } from "@prisma/client";
-import prisma from "../config/db/client";
 import { createError } from "../utils/error";
 import { ErrorCode } from "../config/contants/erroCode";
 
-// A loose type for any Prisma model delegate
-// (project, release, developer, etc.)
 type PrismaModelDelegate = {
   create: (args: any) => Promise<any>;
   findMany: (args?: any) => Promise<any[]>;
@@ -14,88 +10,69 @@ type PrismaModelDelegate = {
   delete: (args: any) => Promise<any>;
 };
 
-export class BaseService {
+export class BaseService<TModel = any> {
   protected model: PrismaModelDelegate;
 
   constructor(model: PrismaModelDelegate) {
     this.model = model;
   }
 
-  async create<TData>(data: TData) {
+  async create<TData>(data: TData, options?: { include?: any; select?: any }): Promise<TModel> {
     try {
-      return await this.model.create({ data });
+      return await this.model.create({
+        data,
+        ...options,
+      });
     } catch (error: any) {
-      throw createError(
-        error?.message || "Failed to create record.",
-        500,
-        ErrorCode.INTERNAL_SERVER_ERROR
-      );
+      throw createError(error?.message || "Failed to create record.", 500, ErrorCode.INTERNAL_SERVER_ERROR);
     }
   }
 
-  async findAll(orderBy?: any) {
+  async findAll(orderBy?: any, options?: { include?: any; select?: any }): Promise<TModel[]> {
     try {
-      return await this.model.findMany({ orderBy });
+      return await this.model.findMany({ orderBy, ...options });
     } catch (error: any) {
-      throw createError(
-        error?.message || "Failed to fetch records.",
-        500,
-        ErrorCode.INTERNAL_SERVER_ERROR
-      );
+      throw createError(error?.message || "Failed to fetch records.", 500, ErrorCode.INTERNAL_SERVER_ERROR);
     }
   }
 
-  async findById<TIdKey extends string>(where: Record<TIdKey, string>) {
+  async findById<TIdKey extends string>(
+    where: Record<TIdKey, string>,
+    options?: { include?: any; select?: any }
+  ): Promise<TModel | null> {
     try {
-      return await this.model.findUnique({ where });
+      return await this.model.findUnique({ where, ...options });
     } catch (error: any) {
-      throw createError(
-        error?.message || "Failed to fetch record by ID.",
-        500,
-        ErrorCode.INTERNAL_SERVER_ERROR
-      );
+      throw createError(error?.message || "Failed to fetch record by ID.", 500, ErrorCode.INTERNAL_SERVER_ERROR);
     }
   }
 
   async update<TIdKey extends string, TData>(
     where: Record<TIdKey, string>,
-    data: TData
-  ) {
+    data: TData,
+    options?: { include?: any; select?: any }
+  ): Promise<TModel> {
     try {
-      return await this.model.update({ where, data });
+      return await this.model.update({ where, data, ...options });
     } catch (error: any) {
       if (error.code === "P2025") {
-        throw createError(
-          "Record not found or already deleted.",
-          404,
-          ErrorCode.NOT_FOUND
-        );
+        throw createError("Record not found or already deleted.", 404, ErrorCode.NOT_FOUND);
       }
-      throw createError(
-        error?.message || "Failed to update record.",
-        500,
-        ErrorCode.INTERNAL_SERVER_ERROR
-      );
+      throw createError(error?.message || "Failed to update record.", 500, ErrorCode.INTERNAL_SERVER_ERROR);
     }
   }
 
-  async delete<TIdKey extends string>(where: Record<TIdKey, string>) {
+  async delete<TIdKey extends string>(
+    where: Record<TIdKey, string>,
+    options?: { include?: any; select?: any }
+  ): Promise<TModel> {
     try {
-      await this.model.delete({ where });
-      return { message: "Record deleted successfully" };
+      return await this.model.delete({ where, ...options });
     } catch (error: any) {
       if (error.code === "P2025") {
-        throw createError(
-          "Record not found or already deleted.",
-          404,
-          ErrorCode.NOT_FOUND
-        );
+        throw createError("Record not found or already deleted.", 404, ErrorCode.NOT_FOUND);
       }
-      throw createError(
-        error?.message || "Failed to delete record.",
-        500,
-        ErrorCode.INTERNAL_SERVER_ERROR
-      );
+      throw createError(error?.message || "Failed to delete record.", 500, ErrorCode.INTERNAL_SERVER_ERROR);
     }
   }
 }

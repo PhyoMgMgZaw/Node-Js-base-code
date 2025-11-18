@@ -1,47 +1,54 @@
-// src/controllers/base/BaseController.ts
+// src/controllers/BaseController.ts
 import { Request, Response, NextFunction } from "express";
 import { BaseService } from "../services/baseService";
-import { ErrorCode } from "../config/contants/erroCode";
 import { createError } from "../utils/error";
+import { ErrorCode } from "../config/contants/erroCode";
+import { ZodSchema } from "zod";
 
-export class BaseController<
-  S extends BaseService,
-  IdParamKey extends string
-> {
+interface ControllerOptions<S extends BaseService, IdParamKey extends string, TData> {
+  service: S;
+  idParamKey: IdParamKey;
+  resourceName: string;
+  defaultOrderBy?: any;
+  defaultInclude?: any;
+  schema?: ZodSchema<TData>; // Optional runtime validation
+}
+
+export class BaseController<S extends BaseService, IdParamKey extends string, TData = any> {
   protected service: S;
   protected idParamKey: IdParamKey;
   protected resourceName: string;
   protected defaultOrderBy?: any;
+  protected defaultInclude?: any;
+  protected schema?: ZodSchema<TData>;
 
-  constructor(options: {
-    service: S;
-    idParamKey: IdParamKey;
-    resourceName: string;
-    defaultOrderBy?: any;
-  }) {
+  constructor(options: ControllerOptions<S, IdParamKey, TData>) {
     this.service = options.service;
     this.idParamKey = options.idParamKey;
     this.resourceName = options.resourceName;
     this.defaultOrderBy = options.defaultOrderBy;
+    this.defaultInclude = options.defaultInclude;
+    this.schema = options.schema;
   }
 
   create = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const newRecord = await this.service.create(req.body);
+      if (this.schema) req.body = this.schema.parse(req.body); // runtime type validation
+      const record = await this.service.create(req.body, { include: this.defaultInclude });
       res.status(201).json({
         message: `${this.resourceName} created successfully.`,
         status: true,
         statusCode: 201,
-        data: newRecord,
+        data: record,
       });
     } catch (error) {
-      return next(error);
+      next(error);
     }
   };
 
   getAll = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const records = await this.service.findAll(this.defaultOrderBy);
+      const records = await this.service.findAll(this.defaultOrderBy, { include: this.defaultInclude });
       res.status(200).json({
         message: `${this.resourceName}s retrieved successfully.`,
         status: true,
@@ -49,24 +56,15 @@ export class BaseController<
         data: records,
       });
     } catch (error) {
-      return next(error);
+      next(error);
     }
   };
 
   getById = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const id = req.params[this.idParamKey];
-      const record = await this.service.findById({ [this.idParamKey]: id } as any);
-
-      if (!record) {
-        return next(
-          createError(
-            `${this.resourceName} not found.`,
-            404,
-            ErrorCode.NOT_FOUND
-          )
-        );
-      }
+      const record = await this.service.findById({ [this.idParamKey]: id } as any, { include: this.defaultInclude });
+      if (!record) return next(createError(`${this.resourceName} not found.`, 404, ErrorCode.NOT_FOUND));
 
       res.status(200).json({
         message: `${this.resourceName} retrieved successfully.`,
@@ -75,18 +73,15 @@ export class BaseController<
         data: record,
       });
     } catch (error) {
-      return next(error);
+      next(error);
     }
   };
 
   update = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const id = req.params[this.idParamKey];
-      const updated = await this.service.update(
-        { [this.idParamKey]: id } as any,
-        req.body
-      );
-
+      if (this.schema) req.body = this.schema.parse(req.body); // validate update data
+      const updated = await this.service.update({ [this.idParamKey]: id } as any, req.body, { include: this.defaultInclude });
       res.status(200).json({
         message: `${this.resourceName} updated successfully.`,
         status: true,
@@ -94,25 +89,22 @@ export class BaseController<
         data: updated,
       });
     } catch (error) {
-      return next(error);
+      next(error);
     }
   };
 
   delete = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const id = req.params[this.idParamKey];
-      const result = await this.service.delete(
-        { [this.idParamKey]: id } as any
-      );
-
+      const deleted = await this.service.delete({ [this.idParamKey]: id } as any, { include: this.defaultInclude });
       res.status(200).json({
         message: `${this.resourceName} deleted successfully.`,
         status: true,
         statusCode: 200,
-        data: result,
+        data: deleted,
       });
     } catch (error) {
-      return next(error);
+      next(error);
     }
   };
 }
