@@ -8,6 +8,6 @@ export const ProjectController = new BaseController({
   idParamKey: "projectId",
   resourceName: "Project",
   defaultOrderBy: { createdAt: "desc" },
-  defaultInclude: {},
+  relatedModel: {},
   schema: createProjectSchema,
 });
