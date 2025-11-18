@@ -5,23 +5,25 @@ import { createProjectSchema, updateProjectSchema } from "../../../schema/projec
 import { ProjectController } from "../../../controllers/project/ProjectController";
 
 const router = express.Router();
+
 router.use(authMiddleware);
+
 router.post(
   "/",
   validation.validateBody(createProjectSchema),
-  ProjectController.createProject
+  ProjectController.create
 );
 
-router.get("/", ProjectController.getAllProjects);
+router.get("/", ProjectController.getAll);
 
-router.get("/:projectId", ProjectController.getProjectById);
+router.get("/:projectId", ProjectController.getById);
 
 router.put(
   "/:projectId",
   validation.validateBody(updateProjectSchema),
-  ProjectController.updateProject
+  ProjectController.update
 );
 
-router.delete("/:projectId", ProjectController.deleteProject);
+router.delete("/:projectId", ProjectController.delete);
 
 export default router;

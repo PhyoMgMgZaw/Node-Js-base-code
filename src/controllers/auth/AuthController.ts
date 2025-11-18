@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { getUserByEmail, getUserById } from "../../services/baseService";
+import { getUserByEmail, getUserById } from "../../services/helperService";
 import { authUtils } from "../../utils/auth";
 import { createError } from "../../utils/error";
 import { ErrorCode } from "../../config/contants/erroCode";
