@@ -8,7 +8,7 @@ export const ReleaseController = new BaseController({
   idParamKey: "releaseId",
   resourceName: "release",
   defaultOrderBy: { createdAt: "desc" },
-  defaultInclude: {
+  relatedModel: {
     project: true, // related models can be included here
   },
    schema: createReleaseSchema, 
