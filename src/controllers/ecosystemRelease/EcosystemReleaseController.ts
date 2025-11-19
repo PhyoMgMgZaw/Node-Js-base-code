@@ -5,10 +5,17 @@ class EcosystemReleaseControllerClass extends BaseController<typeof EcosystemRel
     constructor() {
         super({
             service: EcosystemReleaseService,
-            idParamKey: "ecosystemId", 
-            resourceName: "ecosystem release", 
-            defaultOrderBy: { releaseDate: "desc" }, 
-            relatedModel: { projectLinks: true }, 
+            idParamKey: "ecosystemId",
+            resourceName: "ecosystem release",
+            defaultOrderBy: { releaseDate: "desc" },
+            relatedModel: { 
+                projectLinks: true
+            },
+            mediaOptions: {
+                enabled: true,
+                fieldName: "media",     
+                relatedType: "ecosystemRelease", 
+            },
         });
     }
 

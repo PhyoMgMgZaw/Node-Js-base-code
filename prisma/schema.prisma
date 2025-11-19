@@ -201,3 +201,15 @@ model RelatedDoc {
   @@id([docId, relatedType, relatedId])
   @@map("related_doc")
 }
+
+model Media {
+  mediaId     String   @id @default(uuid())
+  relatedId   String
+  relatedType String              // "Project", "Release", "KnowledgeDoc", ...
+  url         String   @db.Text              // image URL
+  type        String              // "cover", "logo", "banner", etc.
+  createdAt   DateTime @default(now())
+
+  @@map("media")
+}
+

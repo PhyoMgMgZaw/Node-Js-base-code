@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+const mediaItemSchema = z.object({
+  url: z.string().url("Invalid media url"),
+  type: z.string().min(1, "Media kind is required"), // "cover", "logo", "banner", ...
+});
+
 export const createEcosystemReleaseSchema = z.object({
   name: z.string({
     error: "Ecosystem name is required",
@@ -12,12 +17,14 @@ export const createEcosystemReleaseSchema = z.object({
   releaseDate: z.string({
     error: "Release Date is required",
   }).optional(), 
+  media: z.array(mediaItemSchema).optional(),
 });
 
 export const updateEcosystemReleaseSchema = z.object({
   name: z.string().min(1, "Ecosystem name must not be empty").optional(),
   description: z.string().optional(),
   releaseDate: z.string().optional(),
+  media: z.array(mediaItemSchema).optional(),
 }).refine(data => 
   data.name !== undefined ||
   data.description !== undefined ||
