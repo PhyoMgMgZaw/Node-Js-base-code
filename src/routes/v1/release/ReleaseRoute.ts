@@ -21,6 +21,8 @@ router.put(
   ReleaseController.update
 );
 
+router.get("/project/:projectId", ReleaseController.getByProjectId);
+
 router.delete("/:releaseId", ReleaseController.delete);
 
 export default router;
