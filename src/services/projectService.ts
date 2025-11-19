@@ -1,4 +1,3 @@
-// src/services/projectService.ts
 import prisma from "../config/db/client";
 import { BaseService } from "./baseService";
 import { CreateProjectPayload } from "../schema/projectSchema";
