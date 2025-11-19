@@ -29,6 +29,7 @@ export const createReleaseSchema = z.object({
 
 // Update Release Schema
 export const updateReleaseSchema = z.object({
+  projectId: z.string().min(1, "Project ID is required").optional(),
   versionNumber: z.string().min(1, "Version number is required").optional(),
   releaseType: z.string().min(1, "Release type is required").optional(),
   environment: z.string().min(1, "Environment is required").optional(),
@@ -37,6 +38,7 @@ export const updateReleaseSchema = z.object({
   releaseNotesUrl: z.string().url("Invalid URL format").optional(),
   reviewedBy: z.string().optional(),
 }).refine(data => 
+  data.projectId !== undefined ||
   data.versionNumber !== undefined ||
   data.releaseType !== undefined ||
   data.environment !== undefined ||
@@ -47,6 +49,7 @@ export const updateReleaseSchema = z.object({
 {
   message: "At least one field must be provided for update",
 });
+console.log("ok");
 
 // TypeScript type for create payload
 export type CreateReleasePayload = z.infer<typeof createReleaseSchema>;
