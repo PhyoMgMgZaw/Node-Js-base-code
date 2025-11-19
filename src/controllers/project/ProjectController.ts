@@ -6,7 +6,7 @@ class ProjectControllerClass extends BaseController<typeof ProjectService, "proj
     super({
       service: ProjectService,
       idParamKey: "projectId",
-      resourceName: "project",
+      resourceName: "Project",
       defaultOrderBy: { createdAt: "desc" },
       relatedModel: {}, // Add related models if needed
     });
