@@ -7,6 +7,8 @@ import ReleaseRoute from "./release/ReleaseRoute";
 import ChangeLogItemRoute from "./changeLogItem/ChangeLogItemRoutes";
 import EnvironmentRequirementRoute from "./environmentRequirement/EnvironmentRequirementRoute";
 import KnowledgeDocRoute from "./knowledgeDoc/KnowledgeDocRoutes";
+import TagRoute from "./tag/TagRoutes";
+import EcoSystemRoute from "./ecosystemRelease/EcosystemReleaseRoutes";
 
 router.use("/auth",AuthRoute);
 router.use("/projects",ProjectRoute);
@@ -14,4 +16,6 @@ router.use("/releases",ReleaseRoute);
 router.use("/changeLogItems",ChangeLogItemRoute);
 router.use("/environmentRequirements",EnvironmentRequirementRoute);
 router.use("/knowledgeDocs",KnowledgeDocRoute);
+router.use("/tags",TagRoute);
+router.use("/ecosystemReleases",EcoSystemRoute);
 export default router;
