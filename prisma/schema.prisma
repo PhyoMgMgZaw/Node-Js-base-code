@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -11,81 +8,122 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      =   env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
+
+// =========================
+// PROJECT / TAGS
+// =========================
+
 model Project {
-  projectId   String    @id @default(uuid())
+  projectId   String   @id @default(uuid())
   name        String
   description String?
   platforms   String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  releases    Release[]
+  // Relations
+  releases        Release[]
+  tagProjectLinks TagProjectLink[]
+  ecosystemLinks  EcosystemProjectLink[]
+
+  @@map("project")
 }
 
-model Release {
-  releaseId       String           @id @default(uuid())
-  projectId       String
-  versionNumber   String
-  releaseType     String
-  environment     String
-  status          String
-  releaseDate     DateTime?
-  releaseNotesUrl String?
-  reviewedBy      String?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+model Tag {
+  tagId     String   @id @default(uuid())
+  label     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  project          Project        @relation(fields: [projectId], references: [projectId])
-  changelogItems   ChangelogItem[]
-  releaseFiles     ReleaseFile[]
-  environmentReqs  EnvironmentRequirement[]
+  // Relations
+  tagProjectLinks TagProjectLink[]
+
+  @@map("tag")
+}
+
+model TagProjectLink {
+  tagProjectId String @id @default(uuid())
+  tagId        String
+  projectId    String
+
+  tag     Tag     @relation(fields: [tagId], references: [tagId])
+  project Project @relation(fields: [projectId], references: [projectId])
+
+  @@map("tag_project_link")
+}
+
+// =========================
+// RELEASE / CHANGELOG / ENVIRONMENT
+// =========================
+
+model Release {
+  releaseId     String    @id @default(uuid())
+  projectId     String
+  versionNumber String
+  releaseType   String
+  environmentId String?   @map("environment_id")
+  status        String
+  releaseDate   DateTime?
+  reviewedBy    String?
+  fileChangeLog String? // from ERD
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  project           Project                 @relation(fields: [projectId], references: [projectId])
+  changelogItems    ChangelogItem[]
   releaseDevelopers ReleaseDeveloper[]
-  ecosystemLinks   EcosystemReleaseLink[]
+  environment       EnvironmentRequirement? @relation(fields: [environmentId], references: [envId])
+
+  @@map("release")
 }
 
 model ChangelogItem {
-  changeId   String   @id @default(uuid())
-  releaseId  String
-  category   String
+  changeId    String   @id @default(uuid())
+  releaseId   String
+  category    String
   description String
-  createdAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
 
-  release    Release @relation(fields: [releaseId], references: [releaseId])
+  release Release @relation(fields: [releaseId], references: [releaseId])
+
+  @@map("changelog_item")
 }
 
-model ReleaseFile {
-  fileId     String   @id @default(uuid())
-  releaseId  String
-  fileName   String
-  filePath   String
-  fileType   String
-  description String?
-  createdAt  DateTime @default(now())
-
-  release    Release @relation(fields: [releaseId], references: [releaseId])
-}
+// EnvironmentRequirement in ERD is independent (not per-release) but referenced by Release.environment_id
 
 model EnvironmentRequirement {
-  envId           String   @id @default(uuid())
-  releaseId       String
-  name            String
-  versionRequired String
-  notes           String?
+  envId     String   @id @default(uuid())
+  name      String
+  notes     String?
+  createdAt DateTime @default(now())
 
-  release         Release @relation(fields: [releaseId], references: [releaseId])
+  // Relations
+  releases Release[]
+
+  @@map("environment_requirement")
 }
 
+// =========================
+// DEVELOPERS & RELEASE_DEVELOPER
+// =========================
+
 model Developer {
-  devId    String   @id  
+  devId    String   @id @default(uuid())
   name     String
   email    String   @unique
-  role     String @default("user")
-  team     String
-  password  String
+  password String
+  role     String   @default("user")
+  team     String?
   joinedAt DateTime @default(now())
+
+  // Relations
   releaseDevelopers ReleaseDeveloper[]
+  knowledgeDocs     KnowledgeDoc[]
+
+  @@map("developer")
 }
 
 model ReleaseDeveloper {
@@ -93,52 +131,73 @@ model ReleaseDeveloper {
   devId         String
   contributions String?
 
-  release       Release   @relation(fields: [releaseId], references: [releaseId])
-  developer     Developer @relation(fields: [devId], references: [devId])
+  release   Release   @relation(fields: [releaseId], references: [releaseId])
+  developer Developer @relation(fields: [devId], references: [devId])
 
   @@id([releaseId, devId])
+  @@map("release_developer")
 }
+
+// =========================
+// ECOSYSTEM
+// =========================
 
 model EcosystemRelease {
-  ecosystemId String   @id @default(uuid())
+  ecosystemId String    @id @default(uuid())
   name        String
-  tag         String?
   description String?
   releaseDate DateTime?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
 
-  links       EcosystemReleaseLink[]
+  // Relations
+  projectLinks EcosystemProjectLink[]
+
+  @@map("ecosystem_release")
 }
 
-model EcosystemReleaseLink {
+model EcosystemProjectLink {
   ecosystemId String
-  releaseId   String
+  projectId   String
 
-  ecosystem   EcosystemRelease @relation(fields: [ecosystemId], references: [ecosystemId])
-  release     Release          @relation(fields: [releaseId], references: [releaseId])
+  ecosystem EcosystemRelease @relation(fields: [ecosystemId], references: [ecosystemId])
+  project   Project          @relation(fields: [projectId], references: [projectId])
 
-  @@id([ecosystemId, releaseId])
+  @@id([ecosystemId, projectId])
+  @@map("ecosystem_project_link")
 }
+
+// =========================
+// KNOWLEDGE DOCS
+// =========================
 
 model KnowledgeDoc {
-  docId      String   @id @default(uuid())
-  title      String
-  content    String
-  category   String?
-  visibility String?
-  docUrl     String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  docId       String   @id @default(uuid())
+  title       String
+  content     String
+  category    String?
+  visibility  String?
+  developerId String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  relatedDocs RelatedDoc[]
+  // Relations
+  developer   Developer?   @relation(fields: [developerId], references: [devId])
+  relatedDocs RelatedDoc[] @relation("DocToRelated")
+  targets     RelatedDoc[] @relation("TargetDocToRelated")
+
+  @@map("knowledge_doc")
 }
 
- model RelatedDoc {
+model RelatedDoc {
   docId       String
   relatedType String
   relatedId   String
 
-  doc         KnowledgeDoc @relation(fields: [docId], references: [docId])
+  // docId -> source doc
+  doc       KnowledgeDoc @relation("DocToRelated", fields: [docId], references: [docId])
+  // relatedId -> target doc
+  targetDoc KnowledgeDoc @relation("TargetDocToRelated", fields: [relatedId], references: [docId])
 
   @@id([docId, relatedType, relatedId])
+  @@map("related_doc")
 }

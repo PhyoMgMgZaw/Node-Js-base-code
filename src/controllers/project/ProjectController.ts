@@ -1,6 +1,5 @@
 import { BaseController } from "../BaseController";
 import { ProjectService } from "../../services/projectService";
-import { createProjectSchema } from "../../schema/projectSchema";
 
 class ProjectControllerClass extends BaseController<typeof ProjectService, "projectId"> {
   constructor() {
@@ -10,7 +9,6 @@ class ProjectControllerClass extends BaseController<typeof ProjectService, "proj
       resourceName: "project",
       defaultOrderBy: { createdAt: "desc" },
       relatedModel: {}, // Add related models if needed
-      schema: createProjectSchema,
     });
   }
 

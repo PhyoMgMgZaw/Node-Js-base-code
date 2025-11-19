@@ -1,7 +1,5 @@
 import { BaseController } from "../BaseController";
 import { ChangelogItemService } from "../../services/changeLogItemService";
-import { createChangelogItemSchema } from "../../schema/changelogItemSchema";
-import { Request, Response, NextFunction } from "express";
 
 class ChangelogItemControllerClass extends BaseController<typeof ChangelogItemService, "changeId"> {
     constructor() {
@@ -11,7 +9,6 @@ class ChangelogItemControllerClass extends BaseController<typeof ChangelogItemSe
             resourceName: "Changelog Item",
             defaultOrderBy: { createdAt: "desc" },
             relatedModel: { release: true },
-            schema: createChangelogItemSchema,
         });
     }
 

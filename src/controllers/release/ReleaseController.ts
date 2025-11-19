@@ -1,6 +1,5 @@
 import { BaseController } from "../BaseController";
 import { ReleaseService } from "../../services/releaseService";
-import { createReleaseSchema } from "../../schema/releaseSchema";
 
 class ReleaseControllerClass extends BaseController<typeof ReleaseService, "releaseId"> {
     constructor() {
@@ -10,7 +9,6 @@ class ReleaseControllerClass extends BaseController<typeof ReleaseService, "rele
             resourceName: "release",
             defaultOrderBy: { createdAt: "desc" },
             relatedModel: { project: true },
-            schema: createReleaseSchema,
         });
     }
 
