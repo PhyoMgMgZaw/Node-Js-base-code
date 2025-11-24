@@ -100,45 +100,62 @@ export class BaseController<S extends BaseService, IdParamKey extends string> {
 
   getAll = async (req: Request, res: Response, next: NextFunction) => {
     try {
+      // Read pagination query params
+      const page = parseInt((req.query.page as string) || "1", 10);
+      const limit = parseInt((req.query.limit as string) || "10", 10);
+
+      const skip = (page - 1) * limit;
+      const take = limit;
+
+      // Fetch total count for meta
+      const total = await this.service.count();
+
+      // Fetch paginated records
       const records = await this.service.findAll(this.defaultOrderBy, {
         include: this.relatedModel,
+        skip,
+        take,
       });
 
-      if (!this.mediaOptions?.enabled) {
-        return res.status(200).json({
-          message: `${this.resourceName}s retrieved successfully.`,
-          status: true,
-          statusCode: 200,
-          data: records,
-        });
+      let data: any[] = records;
+
+      // Include media if enabled
+      if (this.mediaOptions?.enabled) {
+        const mediaFieldName = this.mediaOptions.fieldName || "media";
+
+        data = await Promise.all(
+          records.map(async (r: any) => {
+            const ownerId = r[this.idParamKey];
+            const media = await MediaService.getFor(
+              this.mediaOptions!.relatedType,
+              ownerId
+            );
+            return {
+              ...r,
+              [mediaFieldName]: media,
+            };
+          })
+        );
       }
 
-      const mediaFieldName = this.mediaOptions.fieldName || "media";
-
-      const withMedia = await Promise.all(
-        records.map(async (r: any) => {
-          const ownerId = r[this.idParamKey];
-          const media = await MediaService.getFor(
-            this.mediaOptions!.relatedType,
-            ownerId
-          );
-          return {
-            ...r,
-            [mediaFieldName]: media,
-          };
-        })
-      );
-
+      // Return paginated response
       res.status(200).json({
         message: `${this.resourceName}s retrieved successfully.`,
         status: true,
         statusCode: 200,
-        data: withMedia,
+        data,
+        meta: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
       });
     } catch (error) {
       next(error);
     }
   };
+
 
   // GET BY ID (+ optional media)
   getById = async (req: Request, res: Response, next: NextFunction) => {
